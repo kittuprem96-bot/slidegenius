@@ -1,1 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SlideGenius - AI Presentation Maker</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 20px; }
+.container { max-width: 600px; margin: 0 auto; }
+.logo { text-align: center; margin-bottom: 30px; }
+.logo h1 { font-size: 2rem; background: linear-gradient(90deg, #8b5cf6, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.logo p { color: #94a3b8; margin-top: 5px; }
+.card { background: #1e293b; border-radius: 16px; padding: 25px; margin-bottom: 20px; border: 1px solid #334155; }
+label { display: block; margin-bottom: 8px; font-weight: 600; color: #cbd5e1; }
+input, select, textarea { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: #e2e8f0; font-size: 1rem; margin-bottom: 15px; }
+textarea { resize: vertical; min-height: 80px; }
+button { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(90deg, #8b5cf6, #06b6d4); color: white; font-size: 1.1rem; font-weight: 700; cursor: pointer; }
+button:disabled { opacity: 0.5; }
+.status { text-align: center; margin-top: 15px; color: #94a3b8; min-height: 24px; }
+.slide { background: white; color: #1e293b; border-radius: 12px; padding: 25px; margin-top: 15px; }
+.slide h2 { color: #6d28d9; margin-bottom: 10px; font-size: 1.3rem; }
+.slide ul { padding-left: 20px; }
+.slide li { margin-bottom: 8px; }
+.actions { margin-top: 20px; }
+.error { color: #f87171; text-align: center; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <h1>⚡ SlideGenius</h1>
+    <p>AI Presentations in Seconds — Free Forever</p>
+  </div>
+
+  <div class="card">
+    <label>📝 Presentation Topic</label>
+    <input type="text" id="topic" placeholder="e.g. Solar System, Machine Learning">
+    <label>🎯 Number of Slides</label>
+    <select id="slideCount">
+      <option>5</option><option selected>7</option><option>10</option>
+    </select>
+    <button id="genBtn" onclick="generate()">✨ Generate Slides</button>
+    <div class="status" id="status"></div>
+    <div class="error" id="error"></div>
+  </div>
+
+  <div id="slides"></div>
+  <div class="actions" id="actions"></div>
+</div>
+
+<script>
+const API_KEY = AQ.Ab8RN6LcWEHMmTzI1bhXoLI36NzPwMDSNFf89ePhitwxE2BB7g
+
+async function generate() {
+  const topic = document.getElementById('topic').value.trim();
+  const count = document.getElementById('slideCount').value;
+  const status = document.getElementById('status');
+  const errorEl = document.getElementById('error');
+  if (!topic) { errorEl.textContent = "Please enter a topic!"; return; }
+  errorEl.textContent = "";
+  document.getElementById('genBtn').disabled = true;
+  status.textContent = "🤖 AI is thinking...";
+  document.getElementById('slides').innerHTML = "";
+
+  const prompt = `Create a count−slidepresentationabout"{count}-slide presentation about "count−slidepresentationabout"{topic}". Return ONLY valid JSON, no markdown, in this exact format: {"slides":[{"title":"slide title","points":["point 1","point 2","point 3"]}]}`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    let text = data.candidates[0].content.parts[0].text;
+    text = text.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(text);
+    displaySlides(parsed.slides, topic);
+    status.textContent = "✅ Done! " + parsed.slides.length + " slides generated.";
+  } catch (err) {
+    errorEl.textContent = "❌ Error: " + err.message + " — check your API key or try again.";
+    status.textContent = "";
+  }
+  document.getElementById('genBtn').disabled = false;
+}
+
+function displaySlides(slides, topic) {
+  const container = document.getElementById('slides');
+  slides.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide';
+    div.innerHTML = `<h2>i+1.{i+1}.i+1.{s.title}</h2><ul>{s.points.map(p => `<li>{p}</li>`).join('')}</ul>`;
+    container.appendChild(div);
+  });
+
+  const actions = document.getElementById('actions');
+  actions.innerHTML = `<button onclick='downloadText(JSON.stringify(JSON.stringify(slides)),"{JSON.stringify(JSON.stringify(slides))}, "JSON.stringify(JSON.stringify(slides)),"{topic}")'>⬇️ Download Slides (.txt)</button>`;
+}
+
+function downloadText(data, topic) {
+  const slides = JSON.parse(data);
+  let content = `PRESENTATION: ${topic}\n\n`;
+  slides.forEach((s, i) => {
+    content += `SLIDE i+1:{i+1}:i+1:{s.title}\n`;
+    s.points.forEach(p => content += `  - ${p}\n`);
+    content += `\n`;
+  });
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = topic.replace(/\s+/g, '_') + '_slides.txt';
+  a.click();
+}
+</script>
+</body>
+</html>
 
