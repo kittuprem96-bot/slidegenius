@@ -3,86 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SlideGenius — AI Presentations</title>
+<title>SlideGenius - AI Presentations</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
 body{background:#0d1321;color:#e0e6f0;min-height:100vh;padding:20px}
 .logo{text-align:center;margin:30px 0}
 .logo h1{font-size:2.2em;color:#7c9cff}
 .logo p{color:#8a93a8}
-.card{background:#1a232;border-radius:16px;padding:24px;max-width:500px;margin:0 auto}
+.card{background:#1a2332;border-radius:16px;padding:24px;max-width:500px;margin:0 auto}
 label{display:block;margin:14px 0 6px;font-weight:600}
-input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #2c3a52;background:#0d1321;color:#e0e6f0;font-size:1em}
+input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #2c3a;background:#0d1321;color:#e0e6f0;font-size:1em}
 button{width:100%;margin-top:20px;padding:14px;border:none;border-radius:10px;background:linear-gradient(90deg,#7c4dff,#18d2e8);color:#fff;font-size:1.1em;font-weight:700}
-button:disabled{opacity:.5}
+button:disabled{opacity:0.5}
 .status{text-align:center;margin-top:14px;color:#7c9cff}
 .error{text-align:center;margin-top:10px;color:#ff6b6b}
 .slide{background:#1a2332;border-radius:12px;padding:18px;margin:14px auto;max-width:500px}
 .slide h2{color:#7c9cff;margin-bottom:10px}
 .slide li{margin:6px 0 6px 18px}
-.actions{text-align:center;margin-top:16px}
-.actions button{width:auto;padding:10px 22px}
 </style>
 </head>
 <body>
 <div class="logo">
-<h1>⚡ SlideGenius</h1>
-<p>AI Presentations in Seconds — Free Forever</p>
+<h1>SlideGenius</h1>
+<p>AI Presentations in Seconds</p>
 </div>
 <div class="card">
-<label>📝 Presentation Topic</label>
+<label>Topic</label>
 <input type="text" id="topic" placeholder="e.g. Solar System">
-<label>🎯 Number of Slides</label>
+<label>Number of Slides</label>
 <select id="slideCount">
-<option>5</option><option selected>7</option><option>10</option>
+<option>5</option>
+<option selected>7</option>
+<option>10</option>
 </select>
-<button id="genBtn" onclick="generate()">✨ Generate Slides</button>
+<button onclick="generate()">Generate Slides</button>
 <div class="status" id="status"></div>
 <div class="error" id="error"></div>
 </div>
 <div id="slides"></div>
-<div class="actions" id="actions"></div>
 <script>
-const API_KEY = AQ.Ab8RN6K7c15Y_1h7-F2nIBVi2nhPsM_y4VaZmpbXj_Y0njt3IQ
+var API_KEY = "AQ.Ab8RN6KTAa8g4dcGPHZqGG_91CANxBS3MUlEz0eHbgReg2IwNA";
 
 async function generate() {
-  const topic = document.getElementById('topic').value.trim();
-  const count = document.getElementById('slideCount').value;
-  const status = document.getElementById('status');
-  const errorEl = document.getElementById('error');
-  if (!topic) { errorEl.textContent = "Please enter a topic!"; return; }
+  var topic = document.getElementById("topic").value.trim();
+  var count = document.getElementById("slideCount").value;
+  var status = document.getElementById("");
+  var errorEl = document.getElementById("error");
+  if (topic === "") {
+    errorEl.textContent = "Please enter a topic!";
+    return;
+  }
   errorEl.textContent = "";
-  document.getElementById('genBtn').disabled = true;
-  status.textContent = "🤖 AI is thinking...";
-  document.getElementById('slides').innerHTML = "";
-  const prompt = "Create a " + count + "-slide presentation about " + topic + ". Reply ONLY with valid JSON, no markdown, in this exact format: {\"slides\":[{\"title\":\"Slide Title\",\"points\":[\"point 1\",\"point 2\",\"point 3\"]}]}";
+  status.textContent = "AI is thinking...";
+  var prompt = "Create a " + count + "-slide presentation about " + topic + ". Reply ONLY with valid JSON, no markdown, in this format: {\"slides\":[{\"title\":\"Slide Title\",\"points\":[\"point 1\",\"point 2\",\"point 3\"]}]}";
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY;
+  var body = { contents: [{ parts: [{ text: prompt }] }] };
   try {
-    const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY, {
+    var res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      body: JSON.stringify(body)
     });
-    const = await res.json();
-    let text = data.candidates0].content.parts[0].text;
-    text = text.replace(/```json|```/g, "").trim();
-    const parsed = JSON.parse(text);
+    var data = await res.json();
+    var text = data.candidates[0].content.parts[0].text;
+    text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    var parsed = JSON.parse(text);
     displaySlides(parsed.slides);
-    status.textContent = "✅ Done! " + parsed.slides.length + " slides generated.";
+    status.textContent = "Done! " + parsed.slides.length + " slides generated.";
   } catch (err) {
-    errorEl.textContent = "❌ Error: " + err.message;
     status.textContent = "";
+    errorEl.textContent = "Error: " + err.message;
   }
-  document.getElementById('genBtn').disabled = false;
 }
 
 function displaySlides(slides) {
-  const container = document.getElementById('slides');
-  slides.forEach(function(s, i) {
-    const div = document.createElement('div');
-    div.className = 'slide';
-    div.innerHTML = "<h2>" + (i+1) + ". " + s.title + "</h2><ul>" + s.points.map(function(p){ return "<li>" + p + "</li>"; }).join("") + "</ul>";
+  var container = document.getElementById("slides");
+  container.innerHTML = "";
+  for (var i = 0; i < slides.length; i++) {
+    var div = document.createElement("div");
+    div.className = "slide";
+    var h = document.createElement("h2");
+    h.textContent = (i + 1) + ". " + slides[i].title;
+    div.appendChild(h);
+    var ul = document.createElement("ul");
+    for (var j = 0; j < slides[i].points.length; j++) {
+      var li = document.createElement("li");
+      li.textContent = slides[i].points[j];
+      ul.appendChild(li);
+    }
+    div.appendChild(ul);
     container.appendChild(div);
-  });
+  }
 }
 </script>
 </body>
